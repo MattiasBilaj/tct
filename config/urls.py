@@ -1,4 +1,4 @@
-from core.views import test_view, subject_list, subject
+from core.views import index, test_view, subject_list, subject
 """config URL Configuration
 
 The `urlpatterns` list routes URLs to views. For more information please see:
@@ -18,6 +18,7 @@ from django.contrib import admin
 from django.urls import path
 
 urlpatterns = [
+    path('', index, name='index'),  # Frontend home page
     path('admin/', admin.site.urls),
     path('test/', test_view),
     path('subject-list/', subject_list),

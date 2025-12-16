@@ -4,6 +4,10 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import Subject
 import json
 
+def index(request):
+    """Serve the frontend HTML page"""
+    return render(request, 'core/index.html')
+
 def test_view(request):
     return JsonResponse({"message":"view is working."})
 

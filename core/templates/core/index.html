@@ -1,0 +1,183 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Subject Manager - API Test Frontend</title>
+    <link rel="stylesheet" href="{% static 'core/style.css' %}">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Subject Manager</h1>
+            <p class="subtitle">API Testing Frontend</p>
+        </header>
+
+        <!-- Create Subject Form -->
+        <section class="card">
+            <h2>Create New Subject</h2>
+            <form id="createSubjectForm">
+                <div class="form-group">
+                    <label for="subjectName">Subject Name:</label>
+                    <input type="text" id="subjectName" name="name" required placeholder="e.g., Mathematics">
+                </div>
+                <div class="form-group">
+                    <label for="subjectDescription">Description:</label>
+                    <textarea id="subjectDescription" name="description" rows="4" placeholder="Enter subject description..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">Create Subject</button>
+            </form>
+            <div id="createMessage" class="message"></div>
+        </section>
+
+        <!-- Test API Connection -->
+        <section class="card">
+            <h2>Test API Connection</h2>
+            <button onclick="testAPI()" class="btn btn-secondary">Test API</button>
+            <div id="testMessage" class="message"></div>
+        </section>
+
+        <!-- View Specific Subject -->
+        <section class="card">
+            <h2>View Specific Subject</h2>
+            <div class="form-group">
+                <label for="subjectId">Subject ID:</label>
+                <input type="number" id="subjectId" placeholder="Enter subject ID">
+                <button onclick="getSubject()" class="btn btn-secondary">Get Subject</button>
+            </div>
+            <div id="subjectDetail" class="detail-box"></div>
+        </section>
+
+        <!-- List All Subjects -->
+        <section class="card">
+            <h2>All Subjects</h2>
+            <button onclick="loadSubjects()" class="btn btn-secondary">Refresh List</button>
+            <div id="subjectsList" class="subjects-container">
+                <p class="info-text">Click "Refresh List" to load subjects</p>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        // Base API URL
+        const API_BASE = '';
+
+        // Load subjects on page load
+        window.addEventListener('DOMContentLoaded', () => {
+            loadSubjects();
+        });
+
+        // Create Subject Form Handler
+        document.getElementById('createSubjectForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const name = document.getElementById('subjectName').value;
+            const description = document.getElementById('subjectDescription').value;
+            const messageDiv = document.getElementById('createMessage');
+
+            try {
+                const response = await fetch(`${API_BASE}/subject/0/`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name, description })
+                });
+
+                const data = await response.json();
+                
+                if (response.ok) {
+                    messageDiv.className = 'message success';
+                    messageDiv.textContent = data.message || 'Subject created successfully!';
+                    document.getElementById('createSubjectForm').reset();
+                    // Reload the subjects list
+                    setTimeout(() => loadSubjects(), 500);
+                } else {
+                    messageDiv.className = 'message error';
+                    messageDiv.textContent = data.error || 'Error creating subject';
+                }
+            } catch (error) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'Network error: ' + error.message;
+            }
+        });
+
+        // Test API Connection
+        async function testAPI() {
+            const messageDiv = document.getElementById('testMessage');
+            try {
+                const response = await fetch(`${API_BASE}/test/`);
+                const data = await response.json();
+                messageDiv.className = 'message success';
+                messageDiv.textContent = `✓ ${data.message}`;
+            } catch (error) {
+                messageDiv.className = 'message error';
+                messageDiv.textContent = 'API connection failed: ' + error.message;
+            }
+        }
+
+        // Load All Subjects
+        async function loadSubjects() {
+            const container = document.getElementById('subjectsList');
+            container.innerHTML = '<p class="info-text">Loading subjects...</p>';
+
+            try {
+                const response = await fetch(`${API_BASE}/subject-list/`);
+                const subjects = await response.json();
+
+                if (subjects.length === 0) {
+                    container.innerHTML = '<p class="info-text">No subjects found. Create one using the form above!</p>';
+                    return;
+                }
+
+                let html = '<div class="subject-grid">';
+                subjects.forEach(subject => {
+                    html += `
+                        <div class="subject-item">
+                            <h3>${subject.name}</h3>
+                            <p class="subject-id">ID: ${subject.id}</p>
+                            <p class="subject-description">${subject.description || 'No description'}</p>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                container.innerHTML = html;
+            } catch (error) {
+                container.innerHTML = `<p class="error">Error loading subjects: ${error.message}</p>`;
+            }
+        }
+
+        // Get Specific Subject
+        async function getSubject() {
+            const id = document.getElementById('subjectId').value;
+            const detailDiv = document.getElementById('subjectDetail');
+
+            if (!id) {
+                detailDiv.innerHTML = '<p class="error">Please enter a subject ID</p>';
+                return;
+            }
+
+            try {
+                const response = await fetch(`${API_BASE}/subject/${id}/`);
+                
+                if (!response.ok) {
+                    throw new Error('Subject not found');
+                }
+
+                const subject = await response.json();
+                detailDiv.innerHTML = `
+                    <div class="detail-content">
+                        <h3>${subject.name}</h3>
+                        <p><strong>ID:</strong> ${subject.id}</p>
+                        <p><strong>Description:</strong> ${subject.description || 'No description'}</p>
+                    </div>
+                `;
+            } catch (error) {
+                detailDiv.innerHTML = `<p class="error">Error: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>
+
