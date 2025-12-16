@@ -1,5 +1,5 @@
 from django.db import models
-
+from datetime import datetime
 
 class Subject(models.Model):
     name = models.CharField(max_length=200)
@@ -10,6 +10,6 @@ class Subject(models.Model):
 
 class StudySession(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
-    date = models.DateField()
+    datetime = models.DateTimeField(default=datetime.now())
     duration_minutes = models.IntegerField()
     notes = models.TextField(blank=True)
