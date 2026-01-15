@@ -9,7 +9,7 @@ router.register(r"subjects", SubjectViewSet, basename="subject")
 
 urlpatterns = [
     path("test2/", test2),
-    path("all-subjects/", all_subjects),
+    path("all-subjects/", all_subjects, name="all-subjects"),
     path("subject/<int:numri>", subject),
     path("study-session/<int:numri>", study_session),
     path("study-session-list/", study_session_list),

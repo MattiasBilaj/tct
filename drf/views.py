@@ -1,6 +1,6 @@
 from rest_framework.decorators import api_view
 from rest_framework.response import Response
-
+from datetime import datetime
 from rest_framework import viewsets
 
 from core.models import Subject, StudySession
@@ -65,6 +65,24 @@ def study_session_list(request):
         # DSH Shtojini pagination
         # DSH 
         # Implementoni ordering (sipas dates) acending edhe descending
+        ordering = request.GET.get("ordering", None)
+        if ordering:
+            if ordering.startswith("-"):
+                try:
+                    date_obj = datetime.fromisoformat(ordering[1:])
+                except ValueError:
+                    return Response({"error":"Invalid string"})
+                qs = StudySession.objects.all().filter(datetime__lte=date_obj).order_by("-datetime")
+                serializer = StudySessionSerializer(qs, many=True)
+                return Response(serializer.data)
+            else:
+                try:
+                    date_obj = datetime.fromisoformat(ordering)
+                except ValueError:
+                    return Response({"error":"Invalid string"})
+                qs = StudySession.objects.all().filter(datetime__gte=date_obj).order_by("datetime")
+                serializer = StudySessionSerializer(qs, many=True)
+                return Response(serializer.data)
         # EXTRA:
         # Perpiquni ta beni me nje query parameter, maybe nje string=-YYYY-MM-DD
         # .startswith("-") string slicing
