@@ -32,8 +32,8 @@ def subject(request, numri):
         return Response(serializer.data)
 
 @api_view(["GET"])
-def study_session(request, numri):
-     study_session = StudySession.objects.get(id=numri)
+async def study_session(request, numri):
+     study_session = await StudySession.objects.aget(id=numri)
      serializer = StudySessionSerializer(study_session)
      return Response(serializer.data)
 
@@ -49,7 +49,6 @@ def study_session_list(request):
             serializer = StudySessionSerializer(qs, many=True)
             # return
             return Response(serializer.data)
-        
         duration_minutes = request.GET.get("duration_minutes", None)
         if duration_minutes:
             qs = StudySession.objects.filter(duration_minutes__lte=duration_minutes)
@@ -87,6 +86,19 @@ def study_session_list(request):
         # Perpiquni ta beni me nje query parameter, maybe nje string=-YYYY-MM-DD
         # .startswith("-") string slicing
 
+@api_view(["GET"])
+def total_time_all_subjects(request):
+    if request.method == "GET":
+        subject_qs = Subject.objects.all()
+        list1=[]
+        for subject in subject_qs:
+            study_sessions = StudySession.objects.filter(subject=subject)
+            total_time = sum(session.duration_minutes for session in study_sessions)
+            dict1 = {"id":subject.id,"Total Time":total_time}
+            list1.append(dict1)
+        return Response(list1)
+        #[{{"id":1},{"total time":120}},{{"id":2},{"total time":140}}]
+        #[{1:120},{2:80}]
 
 class SubjectViewSet(viewsets.ModelViewSet):
      queryset = Subject.objects.all()
