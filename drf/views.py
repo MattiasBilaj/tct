@@ -7,6 +7,9 @@ from core.models import Subject, StudySession
 from .serializers import SubjectSerializer, StudySessionSerializer
 
 from .pagination import StudySessionPagination
+from adrf.views import APIView
+
+import requests
 
 @api_view(["GET"])
 def test2(request):
@@ -113,3 +116,39 @@ class SubjectViewSet(viewsets.ModelViewSet):
      PATCH drf/subjects/{id}/
      DELETE drf/subjects/{id}/
      """
+
+class TotalTimeAllSubjectsAsync(APIView):
+    async def get(self, request):
+        if request.method == "GET":
+            subject_qs = Subject.objects.all()
+            list1=[]
+            breakpoint()
+            async for subject in subject_qs:
+                study_sessions = StudySession.objects.filter(subject=subject)
+                total_time = 0
+                async for session in study_sessions:
+                    total_time += session.duration_minutes
+                dict1 = {"id":subject.id,"Total Time":total_time}
+                list1.append(dict1)
+            return Response(list1)
+
+@api_view(["POST"])
+def third_party_api(request):
+    if request.method == "POST":
+        name = request.data.get("name")
+        
+        response = requests.get(
+            "https://api.agify.io/",
+            params={"name":name},
+            timeout=10)
+
+        # {"count":50651,"name":"matt","age":54}
+        description = f'count: {response.json()["count"]}, age: {response.json()["age"]}'
+        subject = Subject.objects.create(name=name, description=description)
+
+        serializer = SubjectSerializer(subject, many=False)
+        return Response(serializer.data)
+
+
+
+        
