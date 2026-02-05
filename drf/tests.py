@@ -83,6 +83,12 @@ class StudySessionTests(APITestCase):
             duration_minutes = 60,
             notes="test test"
         )
+        self.study_session2 = StudySession.objects.create(
+            subject = self.subject,
+            datetime = "2026-02-22",
+            duration_minutes = 180,
+            notes="test2 test2"
+        )
 
     def test_get_session(self):
         ss_id = self.study_session1.id
@@ -105,7 +111,6 @@ class StudySessionTests(APITestCase):
         
         url = reverse("total-time-all-subjects")
         response = self.client.get(url)
-<<<<<<< HEAD
         self.assertEqual(response.data[0]["Total Time"],self.study_session1.duration_minutes)
     
     def test_total_time_async(self):
@@ -118,14 +123,9 @@ class StudySessionTests(APITestCase):
             url = reverse("total-time-all-subjects-async")
             response = self.client.get(url)
             self.assertEqual(response.data["id"],self.study_session1.id)
-=======
-        
-        # Total should be 60 (from setUp) + 45 = 105
-        expected_total = 105
-        
-        # Find the dictionary for our subject
-        subject_data = next(item for item in response.data if item["id"] == self.subject.id)
-        
-        self.assertEqual(response.status_code, 200)
-        self.assertEqual(subject_data["Total Time"], expected_total)
->>>>>>> bfbf54085d23588c77527eb347b4d9ece4ecbdb5
+
+    def test_ss_analytics(self):
+
+        url = reverse("ss-analytics")
+        response = self.client.get(url)
+        breakpoint()

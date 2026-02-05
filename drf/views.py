@@ -4,7 +4,7 @@ from rest_framework.response import Response
 from datetime import datetime
 from rest_framework import viewsets
 from django.db.models import Sum
-
+import pandas as pd
 from core.models import Subject, StudySession
 from .serializers import SubjectSerializer, StudySessionSerializer
 
@@ -135,7 +135,6 @@ class TotalTimeAllSubjectsAsync(APIView):
         if request.method == "GET":
             subject_qs = Subject.objects.all()
             list1=[]
-            breakpoint()
             async for subject in subject_qs:
                 study_sessions = StudySession.objects.filter(subject=subject)
                 total_time = 0
@@ -144,6 +143,10 @@ class TotalTimeAllSubjectsAsync(APIView):
                 dict1 = {"id":subject.id,"Total Time":total_time}
                 list1.append(dict1)
             return Response(list1)
+
+@api_view(["GET"])
+def total_time_all_subjects(request):
+    ...
 
 @api_view(["POST"])
 def third_party_api(request):
@@ -161,6 +164,57 @@ def third_party_api(request):
 
         serializer = SubjectSerializer(subject, many=False)
         return Response(serializer.data)
+
+    """
+    New view qe ben return:
+    {
+        "total_sessions":0,
+        "total_minutes":0,
+        "average_session_minutes":0,
+        "sessions_per_day":{
+            "2026-01-01":0,
+            "2026-02-01":0
+        }
+    }
+    """
+
+@api_view(["GET"])
+def ss_analytics(request):
+
+    qs = StudySession.objects.all().values(
+            "id",
+            "datetime",
+            "duration_minutes",
+        )
+
+    if not qs.exists():
+        return Response("No Study Sessions Found")
+    
+    # Convert queryset → DataFrame
+    df = pd.DataFrame.from_records(qs)
+
+    """
+    id      datetime     duration_minutes 
+    1       2023-01-12      60  
+    3       2028-02-12      50           
+    """
+    total_sessions = len(df)
+    total_minutes = df["duration_minutes"].sum()
+    average_session_minutes = df["duration_minutes"].mean()
+    breakpoint()
+    df["day"] = str(pd.to_datetime(df["datetime"]).dt.date)
+    sessions_per_day = (
+        df.groupby("day").size().astype(int).to_dict()
+    )
+    #.size().astype(int).to_dict()
+    return Response(
+        {
+        "total_sessions":total_sessions,
+        "total_minutes":total_minutes,
+        "average_session_minutes":average_session_minutes,
+        "sessions_per_day":sessions_per_day
+    }
+    )
 
 
 
